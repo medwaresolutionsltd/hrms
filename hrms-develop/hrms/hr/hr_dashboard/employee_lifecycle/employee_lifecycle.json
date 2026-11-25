@@ -1,0 +1,50 @@
+{
+ "cards": [
+  {
+   "card": "Onboardings (This Month)"
+  },
+  {
+   "card": "Separations (This Month)"
+  },
+  {
+   "card": "Promotions (This Month)"
+  },
+  {
+   "card": "Transfers (This Month)"
+  },
+  {
+   "card": "Trainings (This Month)"
+  }
+ ],
+ "charts": [
+  {
+   "chart": "Grievance Type",
+   "width": "Half"
+  },
+  {
+   "chart": "Training Type",
+   "width": "Half"
+  },
+  {
+   "chart": "Y-O-Y Transfers",
+   "width": "Half"
+  },
+  {
+   "chart": "Y-O-Y Promotions",
+   "width": "Half"
+  }
+ ],
+ "creation": "2022-08-21 12:07:21.614561",
+ "dashboard_name": "Employee Lifecycle",
+ "docstatus": 0,
+ "doctype": "Dashboard",
+ "idx": 0,
+ "insights_dashboard": "employee-lifecycle",
+ "is_default": 0,
+ "is_standard": 1,
+ "modified": "2026-11-18 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "HR",
+ "name": "Employee Lifecycle",
+ "owner": "Administrator"
+}
