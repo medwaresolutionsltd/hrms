@@ -23,6 +23,8 @@
 	<a href="https://docs.frappe.io/hr/introduction">Documentation</a>
 </div>
 
+> **Medware HR**: this is Medware Solutions Ltd's customised fork (branding, Kenya payroll rules, local Docker setup). See [docs/MEDWARE_CUSTOMIZATION.md](docs/MEDWARE_CUSTOMIZATION.md) for the technical documentation.
+
 ## Frappe HR
 
 Frappe HR has everything you need to drive excellence within the company. It's a complete HRMS solution with over 13 different modules right from Employee Management, Onboarding, Leaves, to Payroll, Taxation, and more!
