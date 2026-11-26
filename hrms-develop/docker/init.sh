@@ -37,6 +37,13 @@ retry bench get-app --branch develop erpnext
 ln -sfn /workspace apps/hrms
 uv pip install --quiet -e apps/hrms --python env/bin/python
 grep -qx hrms sites/apps.txt || printf '\nhrms\n' >> sites/apps.txt
+# Frappe's page-island build resolves HRMS by its real path (/workspace), outside the bench,
+# so it cannot find the bench's JS dependencies. Link them into the repo's (gitignored) node_modules.
+mkdir -p /workspace/node_modules/@framework
+ln -sfn /home/frappe/frappe-bench/apps/frappe/ui /workspace/node_modules/@framework/ui
+for p in /home/frappe/frappe-bench/apps/frappe/node_modules/* /home/frappe/frappe-bench/apps/frappe/node_modules/.bin; do
+    [ -e "/workspace/node_modules/$(basename "$p")" ] || ln -s "$p" "/workspace/node_modules/$(basename "$p")"
+done
 
 bench new-site medware.localhost \
 --force \

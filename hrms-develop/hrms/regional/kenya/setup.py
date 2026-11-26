@@ -42,6 +42,7 @@ def setup():
 	create_salary_components()
 	create_leave_types()
 	for company in frappe.get_all("Company", filters={"country": COUNTRY}, pluck="name"):
+		assign_default_holiday_list(company)
 		create_salary_structure(company)
 
 
@@ -246,6 +247,36 @@ def create_leave_types():
 		)
 		doc.flags.ignore_permissions = True
 		doc.insert()
+
+
+def assign_default_holiday_list(company: str):
+	"""Make the company's default Holiday List (Kenyan public holidays, Sunday off) take effect.
+
+	HRMS only reads holidays from submitted Holiday List Assignments, and salary slips cannot be
+	generated for an employee without one, so the company's default list must be assigned.
+	"""
+	holiday_list = frappe.db.get_value("Company", company, "default_holiday_list")
+	if not holiday_list:
+		return
+
+	if frappe.db.exists(
+		"Holiday List Assignment",
+		{"applicable_for": "Company", "assigned_to": company, "holiday_list": holiday_list, "docstatus": 1},
+	):
+		return
+
+	doc = frappe.get_doc(
+		{
+			"doctype": "Holiday List Assignment",
+			"applicable_for": "Company",
+			"assigned_to": company,
+			"holiday_list": holiday_list,
+			"from_date": frappe.db.get_value("Holiday List", holiday_list, "from_date"),
+		}
+	)
+	doc.flags.ignore_permissions = True
+	doc.insert()
+	doc.submit()
 
 
 # --- salary structure -----------------------------------------------------------------------

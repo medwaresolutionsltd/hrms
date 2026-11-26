@@ -65,6 +65,7 @@ It is idempotent. Re-running it updates components in place.
 
 - **Employer contributions**: NSSF (Employer) `NSSF_ER`, Affordable Housing Levy (Employer) `AHL_ER`, NITA Levy `NITA` (flat KES 50).
 - **Leave types** (Employment Act 2007): Annual 21 days (carry forward), Sick (Full Pay) 7, Sick (Half Pay) 7 at 50% pay, Maternity 90, Paternity 14.
+- **Holiday List Assignment** for each Kenyan company, pointing at the company's default Holiday List. HRMS only reads holidays from submitted assignments, and no salary slip can be generated for an employee without one.
 - **Salary Structure** `Kenya Standard - <company abbr>` per Kenyan company. It has Basic as `base`, the deductions above and the employer contributions. It is submitted on creation.
 
 ### Rates currently in `data.py`
@@ -104,7 +105,20 @@ Not modelled yet:
 
 ### Tests
 
-The tests check the generated formulas against an independent reference calculation, including a worked KES 100,000 example (PAYE 19,308.35). They cover the maths only. They do **not** yet cover a real Salary Slip run through HRMS.
+The unit tests check the generated formulas against an independent reference calculation, including a worked KES 100,000 example (PAYE 19,308.35).
+
+The setup has also been run on the local site and checked end to end with a real HRMS Salary Slip for a KES 100,000 basic salary:
+
+| Line | KES |
+|---|---|
+| NSSF | 6,000.00 |
+| SHIF | 2,750.00 |
+| Housing Levy | 1,500.00 |
+| PAYE | 19,308.35 |
+| Total deductions | 29,558.35 |
+| Net pay | 70,441.65 |
+
+Employer side: NSSF 6,000, Housing Levy 1,500, NITA 50. These numbers confirm the formulas work inside HRMS. They do not confirm the rates are legally correct (see the verification note above).
 
 ```bash
 cd /home/frappe/frappe-bench   # inside the container
@@ -134,6 +148,7 @@ docker compose -f docker/docker-compose.yml up -d
 - **MariaDB 11.8, not 10.8.** The newer client requires TLS, which MariaDB 10.8 does not offer.
 - **`bench get-app --soft-link <local path>` fails** with `'App' object has no attribute 'org'`. Scripts link the repo manually (`ln -sfn /workspace apps/hrms` plus `uv pip install -e`).
 - **The web server binds to `0.0.0.0`.** The Procfile runs `bench serve --port 8000 --host 0.0.0.0`. Without `--host`, the app is unreachable through Docker's port mapping.
+- **Page islands need a link to the bench's JS dependencies.** Frappe 17 builds HRMS pages (such as Employee Profile) as "islands". Because the repo is mounted at `/workspace` and the builder resolves real paths, it cannot see the bench's `node_modules`, and any step that touches the Employee form fails with `Island "hrms.page.employee-profile" is not on this site`. `init.sh` and `finish.sh` now link Frappe's packages into `/workspace/node_modules` (gitignored). After HRMS is installed, run `bench build --app frappe` to build the islands.
 - **GitHub can be flaky on some networks.** `init.sh` retries `bench init` and `get-app` up to 6 times.
 - **Shell scripts need LF line endings** (`docker/.gitattributes` enforces this). CRLF breaks them inside the Linux container.
 - **Git Bash on Windows rewrites paths** in `docker exec` arguments. Prefix with `MSYS_NO_PATHCONV=1`.
@@ -149,8 +164,9 @@ Because this is a direct edit of the upstream source, merges from `frappe/hrms` 
 
 ## 5. Roadmap and known gaps
 
-- Kenya setup has been written and unit-tested but **not yet applied to the running site** (the run was blocked by a Frappe "Island not on this site" error tied to the unfinished frontend build). It has therefore not been checked end-to-end with a real Salary Slip.
-- The mobile app at `/hrms` needs the frontend build to complete.
-- Statutory figures need professional verification (see section 2).
+- Kenya payroll is applied to the local site and verified end to end on a test salary slip (see section 2). It still needs your payroll or tax professional to verify the statutory figures before any live run.
+- Run `bench build --app frappe` after any fresh install so the HRMS page islands exist.
+- The mobile app at `/hrms` is **not built yet**. `bench build --app hrms` runs `yarn install` for the PWA and roster frontends, which stalled on a poor connection. Retry on a better network.
+- ERPNext (the other app on the desk) is deliberately left with its own ERPNext branding for now.
 - Integrations are not built: M-Pesa salary payments, biometric attendance, accounting. ERPNext is installed and covers accounting. Its Kenya chart of accounts, VAT and KRA settings still need configuring.
 - Remaining branding items are listed in section 1.
