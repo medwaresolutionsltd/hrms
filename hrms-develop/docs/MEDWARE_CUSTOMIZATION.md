@@ -156,7 +156,7 @@ docker compose -f docker/docker-compose.yml up -d
 
 ### Going to production
 
-The dev server is not suitable for production. Production should use a standard Frappe deployment (supervisor/nginx or frappe_docker production images), a managed MariaDB, HTTPS, changed credentials, `developer_mode` off, and backups. None of this is set up yet.
+The dev server is not suitable for production. A Render deployment (HTTPS, MariaDB, Redis, one persistent disk) is described in [PRODUCTION_RENDER.md](PRODUCTION_RENDER.md), with its files in `render.yaml` and `docker/production/`. It is written but **not yet deployed or tested**, so treat it as a draft until a staging deployment works.
 
 ## 4. Upstream merges
 

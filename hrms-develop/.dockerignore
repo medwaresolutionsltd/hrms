@@ -1,0 +1,9 @@
+.git
+**/node_modules
+frontend/node_modules
+roster/node_modules
+hrms/public/frontend
+hrms/www/hrms.html
+**/__pycache__
+**/*.pyc
+docs

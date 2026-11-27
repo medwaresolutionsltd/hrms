@@ -1,0 +1,5 @@
+nginx: nginx -c /tmp/nginx.conf -g "daemon off;"
+web: cd /home/frappe/frappe-bench/sites && ../env/bin/gunicorn --bind 127.0.0.1:8000 --workers ${GUNICORN_WORKERS:-2} --threads 4 --timeout 120 --max-requests 5000 --max-requests-jitter 500 --preload frappe.app:application
+socketio: node /home/frappe/frappe-bench/apps/frappe/socketio.js
+schedule: cd /home/frappe/frappe-bench && bench schedule
+worker: cd /home/frappe/frappe-bench && bench worker --queue short,default,long
