@@ -1,0 +1,97 @@
+# Medware HR production stack for a single AWS EC2 host.
+#
+#   Caddy (80/443, automatic HTTPS) -> app (nginx + gunicorn + socket.io + scheduler + worker)
+#                                          |-> db (MariaDB)      |-> redis
+#
+# All state lives on the encrypted EBS data volume mounted at /data:
+#   /data/mariadb  database files          /data/sites   Frappe sites (uploads, backups, config)
+#   /data/redis    queue persistence       /data/caddy   TLS certificates
+#
+# Configuration comes from ./.env (created at first boot from AWS SSM Parameter Store; see
+# env.example). Run from this folder:  docker compose up -d --build
+
+name: medware-hr
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  db:
+    image: mariadb:11.8
+    restart: unless-stopped
+    logging: *logging
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+      - --innodb-buffer-pool-size=1G
+      - --max-connections=150
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD in .env}
+      MARIADB_ROOT_HOST: "%"
+    volumes:
+      - /data/mariadb:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    logging: *logging
+    # noeviction: the background-job queue must never silently lose entries.
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - /data/redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build:
+      context: ../../..           # the repo's hrms-develop/ folder
+      dockerfile: docker/production/Dockerfile
+    image: medware-hr:latest
+    restart: unless-stopped
+    logging: *logging
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SITE_NAME: ${SITE_NAME:?set SITE_NAME in .env}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?set ADMIN_PASSWORD in .env}
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      REDIS_URL: redis://redis:6379
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-3}
+      PORT: "10000"
+    volumes:
+      - /data/sites:/home/frappe/frappe-bench/sites
+    expose:
+      - "10000"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    logging: *logging
+    depends_on:
+      - app
+    environment:
+      SITE_NAME: ${SITE_NAME}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - /data/caddy:/data

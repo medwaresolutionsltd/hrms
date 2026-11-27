@@ -1,12 +1,12 @@
 #!/bin/bash
 # Production entrypoint for the single-container Medware HR deployment.
 #
-# Required environment (set in render.yaml / the Render dashboard):
+# Required environment (set in infra/aws/compose/.env, see docker-compose.yml):
 #   SITE_NAME         public host name, e.g. hr.example.com (also the Frappe site name)
 #   ADMIN_PASSWORD    Administrator password, used only when the site is first created
 #   DB_HOST, DB_PORT, DB_ROOT_PASSWORD   MariaDB private service
-#   REDIS_URL         Render Key Value connection string
-# Optional: GUNICORN_WORKERS (default 2), PORT (default 10000, set by Render)
+#   REDIS_URL         redis://redis:6379
+# Optional: GUNICORN_WORKERS (default 2), PORT (default 10000)
 
 set -euo pipefail
 
@@ -70,5 +70,5 @@ bench --site "$SITE_NAME" enable-scheduler
 mkdir -p /tmp/nginx-body /tmp/nginx-proxy /tmp/nginx-fastcgi /tmp/nginx-uwsgi /tmp/nginx-scgi
 sed -e "s/\${PORT}/$PORT/g" -e "s/\${SITE_NAME}/$SITE_NAME/g" /home/frappe/nginx.conf > /tmp/nginx.conf
 
-# honcho stops every process if any one exits, so Render restarts the container cleanly.
+# honcho stops every process if any one exits, so Docker (restart: unless-stopped) restarts the container cleanly.
 exec honcho -f /home/frappe/Procfile -d "$BENCH" start

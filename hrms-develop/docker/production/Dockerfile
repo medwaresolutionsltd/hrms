@@ -1,8 +1,8 @@
 # Production image for Medware HR (Frappe + ERPNext + this repo as the `hrms` app).
 #
-# Build context is the repo's hrms-develop/ folder (see render.yaml). One container runs every
-# Frappe process (nginx, gunicorn, socketio, scheduler, worker) because Render disks cannot be
-# shared between services and Frappe needs a shared `sites/` folder.
+# Build context is the repo's hrms-develop/ folder (see infra/aws/compose/docker-compose.yml). One container runs every
+# Frappe process (nginx, gunicorn, socketio, scheduler, worker) behind a TLS-terminating proxy
+# (Caddy), so a single host needs only one app container plus MariaDB and Redis.
 
 FROM frappe/bench:latest
 

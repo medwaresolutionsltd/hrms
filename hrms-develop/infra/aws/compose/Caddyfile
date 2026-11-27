@@ -1,0 +1,24 @@
+# Caddy obtains and renews the HTTPS certificate (Let's Encrypt) for SITE_NAME automatically.
+# The DNS A record for SITE_NAME must already point at this server's Elastic IP, and ports
+# 80 and 443 must be open, or certificate issuance will keep retrying.
+
+{$SITE_NAME} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# Large enough for payslip PDFs, scanned documents and CSV imports.
+	request_body {
+		max_size 50MB
+	}
+
+	reverse_proxy app:10000 {
+		# Do not buffer realtime (socket.io) traffic.
+		flush_interval -1
+	}
+}

@@ -156,7 +156,7 @@ docker compose -f docker/docker-compose.yml up -d
 
 ### Going to production
 
-The dev server is not suitable for production. A Render deployment (HTTPS, MariaDB, Redis, one persistent disk) is described in [PRODUCTION_RENDER.md](PRODUCTION_RENDER.md), with its files in `render.yaml` and `docker/production/`. It is written but **not yet deployed or tested**, so treat it as a draft until a staging deployment works.
+The dev server is not suitable for production. A production deployment on AWS (one EC2 host running Docker Compose with Caddy for automatic HTTPS, MariaDB, Redis, an encrypted data disk, daily snapshots and S3 backups) is defined in `infra/aws/` and described in [AWS_DEPLOYMENT.md](AWS_DEPLOYMENT.md). It is validated but **not yet applied to a real AWS account**, so treat it as a draft until a trial deployment works.
 
 ## 4. Upstream merges
 
